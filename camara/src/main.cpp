@@ -2,13 +2,14 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <BluetoothSerial.h>
-#include <Preferences.h>
-Preferences prefs;
+// #include <Preferences.h>
+
+// Preferences prefs;
 BluetoothSerial SerialBT;
 
-#define BT_DISCOVER_TIME  10000
-esp_spp_sec_t sec_mask=ESP_SPP_SEC_NONE; // or ESP_SPP_SEC_ENCRYPT|ESP_SPP_SEC_AUTHENTICATE to request pincode confirmation
-esp_spp_role_t role=ESP_SPP_ROLE_SLAVE; // or ESP_SPP_ROLE_MASTER
+#define BT_DISCOVER_TIME 10000
+esp_spp_sec_t sec_mask = ESP_SPP_SEC_NONE; // or ESP_SPP_SEC_ENCRYPT|ESP_SPP_SEC_AUTHENTICATE to request pincode confirmation
+esp_spp_role_t role = ESP_SPP_ROLE_SLAVE;  // or ESP_SPP_ROLE_MASTER
 
 //
 // WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
@@ -16,97 +17,92 @@ esp_spp_role_t role=ESP_SPP_ROLE_SLAVE; // or ESP_SPP_ROLE_MASTER
 //            Partial images will be transmitted if image exceeds buffer size
 //
 //            You must select partition scheme from the board menu that has at least 3MB APP space.
-//            Face Recognition is DISABLED for ESP32 and ESP32-S2, because it takes up from 15 
+//            Face Recognition is DISABLED for ESP32 and ESP32-S2, because it takes up from 15
 //            seconds to process single frame. Face Detection is ENABLED if PSRAM is enabled as well
 
-// ===================
-// Select camera model
-// ===================
-//#define CAMERA_MODEL_WROVER_KIT // Has PSRAM
-//#define CAMERA_MODEL_ESP_EYE // Has PSRAM
-//#define CAMERA_MODEL_ESP32S3_EYE // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_PSRAM // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_V2_PSRAM // M5Camera version B Has PSRAM
-//#define CAMERA_MODEL_M5STACK_WIDE // Has PSRAM
-//#define CAMERA_MODEL_M5STACK_ESP32CAM // No PSRAM
-//#define CAMERA_MODEL_M5STACK_UNITCAM // No PSRAM
 #define CAMERA_MODEL_AI_THINKER // Has PSRAM
-//#define CAMERA_MODEL_TTGO_T_JOURNAL // No PSRAM
-//#define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
-// ** Espressif Internal Boards **
-//#define CAMERA_MODEL_ESP32_CAM_BOARD
-//#define CAMERA_MODEL_ESP32S2_CAM_BOARD
-//#define CAMERA_MODEL_ESP32S3_CAM_LCD
-//#define CAMERA_MODEL_DFRobot_FireBeetle2_ESP32S3 // Has PSRAM
-//#define CAMERA_MODEL_DFRobot_Romeo_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
-
-// ===========================
-// Enter your WiFi credentials
-// ===========================
-const char* ssid = "INFINITUM7A10_2.4";
-const char* password = "p73G4HBe8c";
 
 void startCameraServer();
 void setupLedFlash(int pin);
 
-void HandleBluetooth(void *params) {
+void HandleBluetooth(void *params)
+{
 
-  if(! SerialBT.begin("esp32cam", true) ) {
+  if (!SerialBT.begin("esp32cam", true))
+  {
     Serial.println("========== serialBT failed!");
-    abort();
+    delay(1000);
+    ESP.restart();
   }
 
-    Serial.println("Starting discoverAsync...");
-  BTScanResults* btDeviceList = SerialBT.getScanResults();  // maybe accessing from different threads!
-  if (SerialBT.discoverAsync([](BTAdvertisedDevice* pDevice) {
-      // BTAdvertisedDeviceSet*set = reinterpret_cast<BTAdvertisedDeviceSet*>(pDevice);
-      // btDeviceList[pDevice->getAddress()] = * set;
-      Serial.printf(">>>>>>>>>>>Found a new device asynchronously: %s\n", pDevice->toString().c_str());
-    } )
-    ) {
+  Serial.println("Starting discoverAsync...");
+  BTScanResults *btDeviceList = SerialBT.getScanResults(); // maybe accessing from different threads!
+  if (SerialBT.discoverAsync([](BTAdvertisedDevice *pDevice)
+                             {
+        // BTAdvertisedDeviceSet*set = reinterpret_cast<BTAdvertisedDeviceSet*>(pDevice);
+        // btDeviceList[pDevice->getAddress()] = * set;
+        Serial.printf(">>>>>>>>>>>Found a new device asynchronously: %s\n", pDevice->toString().c_str()); }))
+  {
     delay(BT_DISCOVER_TIME);
     Serial.print("Stopping discoverAsync... ");
     SerialBT.discoverAsyncStop();
     Serial.println("discoverAsync stopped");
     delay(5000);
-    if(btDeviceList->getCount() > 0) {
+    if (btDeviceList->getCount() > 0)
+    {
       BTAddress addr;
-      int channel=0;
-      Serial.println("Found devices:");
-      for (int i=0; i < btDeviceList->getCount(); i++) {
-        BTAdvertisedDevice *device=btDeviceList->getDevice(i);
+      int channel = 0;
+      Serial.println(F("Found devices:"));
+      for (int i = 0; i < btDeviceList->getCount(); i++)
+      {
+        BTAdvertisedDevice *device = btDeviceList->getDevice(i);
         Serial.printf(" ----- %s  %s %d\n", device->getAddress().toString().c_str(), device->getName().c_str(), device->getRSSI());
-        std::map<int,std::string> channels=SerialBT.getChannels(device->getAddress());
+        std::map<int, std::string> channels = SerialBT.getChannels(device->getAddress());
         Serial.printf("scanned for services, found %d\n", channels.size());
-        for(auto const &entry : channels) {
+        for (auto const &entry : channels)
+        {
           Serial.printf("     channel %d (%s)\n", entry.first, entry.second.c_str());
         }
-        if(channels.size() > 0) {
+        if (channels.size() > 0)
+        {
           addr = device->getAddress();
-          channel=channels.begin()->first;
+          channel = channels.begin()->first;
         }
       }
-      if(addr) {
+      if (addr)
+      {
         Serial.printf("connecting to %s - %d\n", addr.toString().c_str(), channel);
         SerialBT.connect(addr, channel, sec_mask, role);
       }
-    } else {
-      Serial.println("Didn't find any devices");
     }
-  } else {
-    Serial.println("Error on discoverAsync f.e. not workin after a \"connect\"");
+    else
+    {
+      Serial.println(F("Didn't find any devices"));
+    }
   }
-
+  else
+  {
+    Serial.println(F("Error on discoverAsync f.e. not workin after a \"connect\""));
+  }
 }
-void setup() {
+void setup()
+{
+  // ===========================
+  // Enter your WiFi credentials
+  // ===========================
+  const char *ssid = "INFINITUM7A10_2.4";
+  const char *password = "p73G4HBe8c";
+
   Serial.begin(115200);
+  while (!Serial)
+    delay(1);
   Serial.setDebugOutput(true);
   Serial.println();
 
-  prefs.begin("camara");
-  prefs.getString("SSID");
-  prefs.getString("PASS");
+  // prefs.begin("camara");
+  // prefs.getString("SSID");
+  // prefs.getString("PASS");
 
   HandleBluetooth(NULL);
 
@@ -132,25 +128,31 @@ void setup() {
   config.xclk_freq_hz = 20000000;
   config.frame_size = FRAMESIZE_UXGA;
   config.pixel_format = PIXFORMAT_JPEG; // for streaming
-  //config.pixel_format = PIXFORMAT_RGB565; // for face detection/recognition
+  // config.pixel_format = PIXFORMAT_RGB565; // for face detection/recognition
   config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
   config.fb_location = CAMERA_FB_IN_PSRAM;
   config.jpeg_quality = 12;
   config.fb_count = 1;
-  
+
   // if PSRAM IC present, init with UXGA resolution and higher JPEG quality
   //                      for larger pre-allocated frame buffer.
-  if(config.pixel_format == PIXFORMAT_JPEG){
-    if(psramFound()){
+  if (config.pixel_format == PIXFORMAT_JPEG)
+  {
+    if (psramFound() && false)
+    {
       config.jpeg_quality = 10;
       config.fb_count = 2;
       config.grab_mode = CAMERA_GRAB_LATEST;
-    } else {
+    }
+    else
+    {
       // Limit the frame size when PSRAM is not available
       config.frame_size = FRAMESIZE_SVGA;
       config.fb_location = CAMERA_FB_IN_DRAM;
     }
-  } else {
+  }
+  else
+  {
     // Best option for face detection/recognition
     config.frame_size = FRAMESIZE_240X240;
 #if CONFIG_IDF_TARGET_ESP32S3
@@ -165,20 +167,24 @@ void setup() {
 
   // camera init
   esp_err_t err = esp_camera_init(&config);
-  if (err != ESP_OK) {
+  if (err != ESP_OK)
+  {
     Serial.printf("Camera init failed with error 0x%x", err);
-    return;
+    delay(10000);
+    ESP.restart();
   }
 
-  sensor_t * s = esp_camera_sensor_get();
+  sensor_t *s = esp_camera_sensor_get();
   // initial sensors are flipped vertically and colors are a bit saturated
-  if (s->id.PID == OV3660_PID) {
-    s->set_vflip(s, 1); // flip it back
-    s->set_brightness(s, 1); // up the brightness just a bit
+  if (s->id.PID == OV3660_PID)
+  {
+    s->set_vflip(s, 1);       // flip it back
+    s->set_brightness(s, 1);  // up the brightness just a bit
     s->set_saturation(s, -2); // lower the saturation
   }
   // drop down frame size for higher initial frame rate
-  if(config.pixel_format == PIXFORMAT_JPEG){
+  if (config.pixel_format == PIXFORMAT_JPEG)
+  {
     s->set_framesize(s, FRAMESIZE_QVGA);
   }
 
@@ -199,21 +205,23 @@ void setup() {
   WiFi.begin(ssid, password);
   WiFi.setSleep(false);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
-    Serial.print(".");
+    Serial.print(F("."));
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
+  Serial.println(F(""));
+  Serial.println(F("WiFi connected"));
 
   startCameraServer();
 
-  Serial.print("Camera Ready! Use 'http://");
+  Serial.print(F("Camera Ready! Use 'http://"));
   Serial.print(WiFi.localIP());
-  Serial.println("' to connect");
+  Serial.println(F("' to connect"));
 }
 
-void loop() {
+void loop()
+{
   // Do nothing. Everything is done in another task by the web server
   delay(10000);
 }
