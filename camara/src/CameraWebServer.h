@@ -1,3 +1,0 @@
-#ifndef _CAMARAWEBSERVER_
-#define _CAMARAWEBSERVER_ 
-#endif
