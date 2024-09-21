@@ -1,15 +1,10 @@
 #include <Arduino.h>
 #include "esp_camera.h"
 #include <WiFi.h>
-#include <BluetoothSerial.h>
 #include <Preferences.h>
 
 Preferences prefs;
-BluetoothSerial SerialBT;
-
-#define BT_DISCOVER_TIME 10000
-esp_spp_sec_t sec_mask = ESP_SPP_SEC_NONE; // or ESP_SPP_SEC_ENCRYPT|ESP_SPP_SEC_AUTHENTICATE to request pincode confirmation
-esp_spp_role_t role = ESP_SPP_ROLE_SLAVE;  // or ESP_SPP_ROLE_MASTER
+void handleSerial(void *params);
 
 //
 // WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
@@ -20,95 +15,42 @@ esp_spp_role_t role = ESP_SPP_ROLE_SLAVE;  // or ESP_SPP_ROLE_MASTER
 //            Face Recognition is DISABLED for ESP32 and ESP32-S2, because it takes up from 15
 //            seconds to process single frame. Face Detection is ENABLED if PSRAM is enabled as well
 
+// ===================
+// Select camera model
+// ===================
+// #define CAMERA_MODEL_WROVER_KIT // Has PSRAM
+// #define CAMERA_MODEL_ESP_EYE // Has PSRAM
+// #define CAMERA_MODEL_ESP32S3_EYE // Has PSRAM
+// #define CAMERA_MODEL_M5STACK_PSRAM // Has PSRAM
+// #define CAMERA_MODEL_M5STACK_V2_PSRAM // M5Camera version B Has PSRAM
+// #define CAMERA_MODEL_M5STACK_WIDE // Has PSRAM
+// #define CAMERA_MODEL_M5STACK_ESP32CAM // No PSRAM
+// #define CAMERA_MODEL_M5STACK_UNITCAM // No PSRAM
 #define CAMERA_MODEL_AI_THINKER // Has PSRAM
+// #define CAMERA_MODEL_TTGO_T_JOURNAL // No PSRAM
+// #define CAMERA_MODEL_XIAO_ESP32S3 // Has PSRAM
+//  ** Espressif Internal Boards **
+// #define CAMERA_MODEL_ESP32_CAM_BOARD
+// #define CAMERA_MODEL_ESP32S2_CAM_BOARD
+// #define CAMERA_MODEL_ESP32S3_CAM_LCD
+// #define CAMERA_MODEL_DFRobot_FireBeetle2_ESP32S3 // Has PSRAM
+// #define CAMERA_MODEL_DFRobot_Romeo_ESP32S3 // Has PSRAM
 #include "camera_pins.h"
+
+// ===========================
+// Enter your WiFi credentials
+// ===========================
+// const char* ssid = "INFINITUM7A10_2.4";
+// const char* password = "p73G4HBe8c";
 
 void startCameraServer();
 void setupLedFlash(int pin);
 
-void HandleBluetooth(void *params)
-{
-
-  if (!SerialBT.begin("esp32cam", true))
-  {
-    Serial.println("========== serialBT failed!");
-    delay(1000);
-    ESP.restart();
-  }
-
-  Serial.println("Starting discoverAsync...");
-  BTScanResults *btDeviceList = SerialBT.getScanResults(); // maybe accessing from different threads!
-  if (SerialBT.discoverAsync([](BTAdvertisedDevice *pDevice)
-                             {
-        // BTAdvertisedDeviceSet*set = reinterpret_cast<BTAdvertisedDeviceSet*>(pDevice);
-        // btDeviceList[pDevice->getAddress()] = * set;
-        Serial.printf(">>>>>>>>>>>Found a new device asynchronously: %s\n", pDevice->toString().c_str()); }))
-  {
-    delay(BT_DISCOVER_TIME);
-    Serial.print("Stopping discoverAsync... ");
-    SerialBT.discoverAsyncStop();
-    Serial.println("discoverAsync stopped");
-    delay(5000);
-    if (btDeviceList->getCount() > 0)
-    {
-      BTAddress addr;
-      int channel = 0;
-      Serial.println(F("Found devices:"));
-      for (int i = 0; i < btDeviceList->getCount(); i++)
-      {
-        BTAdvertisedDevice *device = btDeviceList->getDevice(i);
-        Serial.printf(" ----- %s  %s %d\n", device->getAddress().toString().c_str(), device->getName().c_str(), device->getRSSI());
-        std::map<int, std::string> channels = SerialBT.getChannels(device->getAddress());
-        Serial.printf("scanned for services, found %d\n", channels.size());
-        for (auto const &entry : channels)
-        {
-          Serial.printf("     channel %d (%s)\n", entry.first, entry.second.c_str());
-        }
-        if (channels.size() > 0)
-        {
-          addr = device->getAddress();
-          channel = channels.begin()->first;
-        }
-      }
-      if (addr)
-      {
-        Serial.printf("connecting to %s - %d\n", addr.toString().c_str(), channel);
-        SerialBT.connect(addr, channel, sec_mask, role);
-      }
-    }
-    else
-    {
-      Serial.println(F("Didn't find any devices"));
-    }
-  }
-  else
-  {
-    Serial.println(F("Error on discoverAsync f.e. not workin after a \"connect\""));
-  }
-  while (true)
-  {
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-  }
-}
 void setup()
 {
-  // ===========================
-  // Enter your WiFi credentials
-  // ===========================
-  const char *ssid = "INFINITUM7A10_2.4";
-  const char *password = "p73G4HBe8c";
-
   Serial.begin(115200);
-  while (!Serial)
-    delay(1);
   Serial.setDebugOutput(true);
   Serial.println();
-
-  prefs.begin("camara");
-  prefs.getString("SSID");
-  prefs.getString("PASS");
-
-  xTaskCreate(HandleBluetooth, "HandleBluetooth", 4096, NULL, 1, NULL);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -142,7 +84,7 @@ void setup()
   //                      for larger pre-allocated frame buffer.
   if (config.pixel_format == PIXFORMAT_JPEG)
   {
-    if (psramFound() && false)
+    if (psramFound())
     {
       config.jpeg_quality = 10;
       config.fb_count = 2;
@@ -174,8 +116,7 @@ void setup()
   if (err != ESP_OK)
   {
     Serial.printf("Camera init failed with error 0x%x", err);
-    delay(10000);
-    ESP.restart();
+    return;
   }
 
   sensor_t *s = esp_camera_sensor_get();
@@ -206,22 +147,93 @@ void setup()
   setupLedFlash(LED_GPIO_NUM);
 #endif
 
-  WiFi.begin(ssid, password);
-  WiFi.setSleep(false);
-
-  while (WiFi.status() != WL_CONNECTED)
+  prefs.begin("camara");
+  xTaskCreate(handleSerial, "handleSerial", 2048, NULL, 1, NULL);
+  if (prefs.isKey("SSID") && prefs.isKey("PASS"))
   {
-    delay(500);
-    Serial.print(F("."));
+    Serial.print(F("SSID:"));
+    Serial.println(prefs.getString("SSID"));
+    Serial.print(F("PASS:"));
+    Serial.println(prefs.getString("PASS"));
+
+    WiFi.begin(prefs.getString("SSID"), prefs.getString("PASS"));
+    WiFi.setSleep(false);
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      delay(500);
+      Serial.print(F("."));
+    }
+    Serial.println(F(""));
+    Serial.println(F("WiFi connected"));
+
+    startCameraServer();
+
+    Serial.print(F("Camera Ready! Use 'http://"));
+    Serial.print(WiFi.localIP());
+    Serial.println(F("' to connect"));
   }
-  Serial.println(F(""));
-  Serial.println(F("WiFi connected"));
 
-  startCameraServer();
+  // WiFi.begin(ssid, password);
+  // WiFi.setSleep(false);
 
-  Serial.print(F("Camera Ready! Use 'http://"));
-  Serial.print(WiFi.localIP());
-  Serial.println(F("' to connect"));
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(500);
+  //   Serial.print(".");
+  // }
+  // Serial.println("");
+  // Serial.println("WiFi connected");
+
+  // startCameraServer();
+
+  // Serial.print("Camera Ready! Use 'http://");
+  // Serial.print(WiFi.localIP());
+  // Serial.println("' to connect");
+}
+
+void handleSerial(void *params)
+{
+  while (true)
+  {
+    if (Serial.available() > 0)
+    {
+      String line = Serial.readStringUntil('\n');
+      if (line.startsWith("SSID:"))
+      {
+        Serial.print(F("SSID:"));
+        prefs.putString("SSID", line.substring(5));
+        Serial.println(prefs.getString("SSID"));
+      }
+      else if (line.startsWith("PASS:"))
+      {
+        Serial.print(F("PASS:"));
+        prefs.putString("PASS", line.substring(5));
+        Serial.println(prefs.getString("PASS"));
+      }
+      else if (line.equals("RESTART"))
+      {
+        ESP.restart();
+      }
+      else if (line.equals("IP"))
+      {
+        if (WiFi.status() == WL_CONNECTED)
+        {
+          Serial.print(F("IP:"));
+          Serial.println(WiFi.localIP());
+        }
+        else
+        {
+          Serial.println(F("DISCONNECTED"));
+        }
+      }
+      else
+      {
+        Serial.print(F("COMANDO_INVALIDO:"));
+        Serial.println(line);
+      }
+    }
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
 }
 
 void loop()
