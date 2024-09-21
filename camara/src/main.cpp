@@ -2,9 +2,9 @@
 #include "esp_camera.h"
 #include <WiFi.h>
 #include <BluetoothSerial.h>
-// #include <Preferences.h>
+#include <Preferences.h>
 
-// Preferences prefs;
+Preferences prefs;
 BluetoothSerial SerialBT;
 
 #define BT_DISCOVER_TIME 10000
@@ -85,6 +85,10 @@ void HandleBluetooth(void *params)
   {
     Serial.println(F("Error on discoverAsync f.e. not workin after a \"connect\""));
   }
+  while (true)
+  {
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+  }
 }
 void setup()
 {
@@ -100,11 +104,11 @@ void setup()
   Serial.setDebugOutput(true);
   Serial.println();
 
-  // prefs.begin("camara");
-  // prefs.getString("SSID");
-  // prefs.getString("PASS");
+  prefs.begin("camara");
+  prefs.getString("SSID");
+  prefs.getString("PASS");
 
-  HandleBluetooth(NULL);
+  xTaskCreate(HandleBluetooth, "HandleBluetooth", 4096, NULL, 1, NULL);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
