@@ -6,29 +6,16 @@
 
 #define I2C_DEV_ADDR 0x55
 
+#define I2C_SDA GPIO_NUM_12 // SDA Connected to GPIO 14
+#define I2C_SCL GPIO_NUM_13 // SCL Connected to GPIO 15
+TwoWire I2CSensors = TwoWire(0);
+uint32_t i = 0;
+String lastRequest = "";
+
 Preferences prefs;
 void handleSerial(void *params);
-
-uint32_t i = 0;
-
-void onRequest()
-{
-  Wire.print(i++);
-  Wire.print(" Packets.");
-  Serial.println("onRequest");
-  Serial.println();
-}
-
-void onReceive(int len)
-{
-  Serial.printf("onReceive[%d]: ", len);
-  while (Wire.available())
-  {
-    Serial.write(Wire.read());
-  }
-  Serial.println();
-}
-
+void onRequest();
+void onReceive(int len);
 //
 // WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
 //            Ensure ESP32 Wrover Module or other board with PSRAM is selected
@@ -74,9 +61,17 @@ void setup()
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
-  Wire.onReceive(onReceive);
-  Wire.onRequest(onRequest);
-  Wire.begin((uint8_t)I2C_DEV_ADDR, 12, 13);
+  pinMode(GPIO_NUM_33, OUTPUT);
+  digitalWrite(GPIO_NUM_33, LOW);
+
+  I2CSensors.onReceive(onReceive);
+  I2CSensors.onRequest(onRequest);
+  if (!I2CSensors.begin(I2C_DEV_ADDR, I2C_SDA, I2C_SCL, 100000))
+  {
+    Serial.println("No pude inicializar el I2C Slave");
+    delay(2000);
+    ESP.restart();
+  }
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -199,22 +194,76 @@ void setup()
     Serial.print(WiFi.localIP());
     Serial.println(F("' to connect"));
   }
+}
 
-  // WiFi.begin(ssid, password);
-  // WiFi.setSleep(false);
-
-  // while (WiFi.status() != WL_CONNECTED) {
-  //   delay(500);
-  //   Serial.print(".");
-  // }
-  // Serial.println("");
-  // Serial.println("WiFi connected");
-
-  // startCameraServer();
-
-  // Serial.print("Camera Ready! Use 'http://");
-  // Serial.print(WiFi.localIP());
-  // Serial.println("' to connect");
+void evaluaComando(String line, bool i2c = false)
+{
+  if (line.startsWith("SSID:"))
+  {
+    Serial.print(F("SSID:"));
+    prefs.putString("SSID", line.substring(5));
+    Serial.println(prefs.getString("SSID"));
+    if (i2c)
+      I2CSensors.println(prefs.getString("SSID"));
+  }
+  else if (line.startsWith("PASS:"))
+  {
+    Serial.print(F("PASS:"));
+    prefs.putString("PASS", line.substring(5));
+    Serial.println(prefs.getString("PASS"));
+    if (i2c)
+      I2CSensors.println(prefs.getString("PASS"));
+  }
+  else if (line.startsWith("RESTART"))
+  {
+    if (i2c)
+      I2CSensors.println("ACK");
+    delay(1000);
+    ESP.restart();
+  }
+  else if (line.startsWith("L:1"))
+  {
+    digitalWrite(GPIO_NUM_33, LOW);
+    if (i2c)
+      I2CSensors.println("ACK");
+  }
+  else if (line.startsWith("L:0"))
+  {
+    digitalWrite(GPIO_NUM_33, HIGH);
+    if (i2c)
+      I2CSensors.println("ACK");
+  }
+  else if (line.startsWith("IP"))
+  {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      Serial.print(F("IP:"));
+      Serial.println(WiFi.localIP());
+      if (i2c)
+      {
+        I2CSensors.print(F("IP:"));
+        I2CSensors.println(WiFi.localIP());
+      }
+    }
+    else
+    {
+      Serial.println(F("DISCONNECTED"));
+      if (i2c)
+        I2CSensors.println(F("DISCONNECTED"));
+    }
+  }
+  else
+  {
+    Serial.print(F("COMANDO_INVALIDO: ["));
+    Serial.print(line);
+    Serial.println("]");
+    if (i2c)
+    {
+      I2CSensors.print(F("COMANDO_INVALIDO: ["));
+      I2CSensors.print(line);
+      I2CSensors.println("]");
+    }
+  }
 }
 
 void handleSerial(void *params)
@@ -224,46 +273,38 @@ void handleSerial(void *params)
     if (Serial.available() > 0)
     {
       String line = Serial.readStringUntil('\n');
-      if (line.startsWith("SSID:"))
-      {
-        Serial.print(F("SSID:"));
-        prefs.putString("SSID", line.substring(5));
-        Serial.println(prefs.getString("SSID"));
-      }
-      else if (line.startsWith("PASS:"))
-      {
-        Serial.print(F("PASS:"));
-        prefs.putString("PASS", line.substring(5));
-        Serial.println(prefs.getString("PASS"));
-      }
-      else if (line.equals("RESTART"))
-      {
-        ESP.restart();
-      }
-      else if (line.equals("IP"))
-      {
-        if (WiFi.status() == WL_CONNECTED)
-        {
-          Serial.print(F("IP:"));
-          Serial.println(WiFi.localIP());
-        }
-        else
-        {
-          Serial.println(F("DISCONNECTED"));
-        }
-      }
-      else
-      {
-        Serial.print(F("COMANDO_INVALIDO:"));
-        Serial.println(line);
-      }
+      evaluaComando(line);
     }
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
 
+void onRequest()
+{
+  Serial.print("onRequest: ");
+  Serial.print(lastRequest);
+  Serial.println();
+  evaluaComando(lastRequest, true);
+  lastRequest = "";
+}
+
+void onReceive(int len)
+{
+  Serial.printf("onReceive[%d]: ", len);
+  while (I2CSensors.available())
+  {
+    String line = I2CSensors.readStringUntil('\n');
+    line.replace("\n", "");
+    Serial.println(line);
+    lastRequest = line;
+  }
+}
+
 void loop()
 {
-  // Do nothing. Everything is done in another task by the web server
+  Serial.println("ACK");
+  // digitalWrite(GPIO_NUM_33, LOW);
+  // delay(1000);
+  // digitalWrite(GPIO_NUM_33, HIGH);
   delay(10000);
 }
