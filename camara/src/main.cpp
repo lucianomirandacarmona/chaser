@@ -1,10 +1,33 @@
 #include <Arduino.h>
 #include "esp_camera.h"
 #include <WiFi.h>
+#include <Wire.h>
 #include <Preferences.h>
+
+#define I2C_DEV_ADDR 0x55
 
 Preferences prefs;
 void handleSerial(void *params);
+
+uint32_t i = 0;
+
+void onRequest()
+{
+  Wire.print(i++);
+  Wire.print(" Packets.");
+  Serial.println("onRequest");
+  Serial.println();
+}
+
+void onReceive(int len)
+{
+  Serial.printf("onReceive[%d]: ", len);
+  while (Wire.available())
+  {
+    Serial.write(Wire.read());
+  }
+  Serial.println();
+}
 
 //
 // WARNING!!! PSRAM IC required for UXGA resolution and high JPEG quality
@@ -51,6 +74,9 @@ void setup()
   Serial.begin(115200);
   Serial.setDebugOutput(true);
   Serial.println();
+  Wire.onReceive(onReceive);
+  Wire.onRequest(onRequest);
+  Wire.begin((uint8_t)I2C_DEV_ADDR, 12, 13);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
