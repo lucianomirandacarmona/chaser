@@ -198,13 +198,22 @@ void setup()
 
 void evaluaComando(String line, bool i2c = false)
 {
-  if (line.startsWith("SSID:"))
+  if (line.startsWith("PING"))
+  {
+    Serial.println(F("PING-PONG"));
+    if (i2c)
+      Serial.printf("Escribi %d bytes\n", I2CSensors.println("PONG"));
+  }
+  else if (line.startsWith("SSID:"))
   {
     Serial.print(F("SSID:"));
     prefs.putString("SSID", line.substring(5));
     Serial.println(prefs.getString("SSID"));
     if (i2c)
+    {
+      I2CSensors.print(F("SSID:"));
       I2CSensors.println(prefs.getString("SSID"));
+    }
   }
   else if (line.startsWith("PASS:"))
   {
@@ -212,7 +221,10 @@ void evaluaComando(String line, bool i2c = false)
     prefs.putString("PASS", line.substring(5));
     Serial.println(prefs.getString("PASS"));
     if (i2c)
+    {
+      I2CSensors.print(F("PASS:"));
       I2CSensors.println(prefs.getString("PASS"));
+    }
   }
   else if (line.startsWith("RESTART"))
   {
@@ -251,6 +263,11 @@ void evaluaComando(String line, bool i2c = false)
       if (i2c)
         I2CSensors.println(F("DISCONNECTED"));
     }
+  }
+  else if (line.length() == 0)
+  {
+    Serial.println("NO HAY COMANDO PENDIENTE");
+    I2CSensors.write(0);
   }
   else
   {
