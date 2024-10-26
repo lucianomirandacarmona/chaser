@@ -172,9 +172,9 @@ void setup()
   xTaskCreate(handleSerial, "handleSerial", 2048, NULL, 1, NULL);
   if (prefs.isKey("SSID") && prefs.isKey("PASS"))
   {
-    Serial.print(F("SSID:"));
+    Serial.print(F("SSID: "));
     Serial.println(prefs.getString("SSID"));
-    Serial.print(F("PASS:"));
+    Serial.print(F("PASS: "));
     Serial.println(prefs.getString("PASS"));
 
     WiFi.begin(prefs.getString("SSID"), prefs.getString("PASS"));
