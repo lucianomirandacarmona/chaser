@@ -2,6 +2,9 @@
 #include <control.h>
 #include <motores.h>
 #include <luces.h>
+#include <Preferences.h>
+
+Preferences prefs;
 BluetoothSerial esp32BT;
 void xd()
 {
@@ -76,7 +79,11 @@ void control(void *parametros)
                 String SSID = esp32BT.readStringUntil('\n').substring(SSID.indexOf(':'));
                 String PASS = esp32BT.readStringUntil('\n').substring(PASS.indexOf(':'));
                 Serial.println(SSID);
-                Serial.println(PASS);
+                Serial.println(PASS); /*-/*/
+                prefs.begin("carrito");
+                prefs.putString("SSID", SSID);
+                prefs.putString("PASS", PASS);
+                prefs.end();
             }
             // xd();
         }
