@@ -180,10 +180,16 @@ void setup()
     WiFi.begin(prefs.getString("SSID"), prefs.getString("PASS"));
     WiFi.setSleep(false);
 
+    int retries = 0;
     while (WiFi.status() != WL_CONNECTED)
     {
       delay(500);
       Serial.print(F("."));
+      if (retries++ > 50)
+      {
+        Serial.println(F("Demasiados reintentos, reiniciar"));
+        esp_restart();
+      }
     }
     Serial.println(F(""));
     Serial.println(F("WiFi connected"));
