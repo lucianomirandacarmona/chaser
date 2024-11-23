@@ -1,4 +1,6 @@
 #include <BluetoothSerial.h>
+#include <Wire.h>
+
 #include <control.h>
 #include <motores.h>
 #include <luces.h>

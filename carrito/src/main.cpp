@@ -29,7 +29,6 @@
 // our servo # counter
 uint8_t servonum = 0;
 
-#define I2C_DEV_ADDR 0x55
 void i2c_scanner();
 void handleSerial(void *params);
 
@@ -49,7 +48,7 @@ void setup()
 
 void loop()
 {
-  // i2c_scanner();
+  // i2c_scanner();/-
 }
 
 void i2c_scanner()
