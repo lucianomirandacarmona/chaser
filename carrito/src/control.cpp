@@ -94,3 +94,11 @@ void control(void *parametros)
         taskYIELD();
     }
 }
+
+void ping()
+{
+    Serial.print(F("ping:"));
+Wire.begintransmision((I2C_DEV_ADDR));
+Wire.println(F("ping"));
+uint8_t error = Wire.endtransmision
+}
