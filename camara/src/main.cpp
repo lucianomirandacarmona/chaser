@@ -59,6 +59,7 @@ void setupLedFlash(int pin);
 void setup()
 {
   Serial.begin(115200);
+  delay(1000);
   Serial.setDebugOutput(true);
   Serial.println();
   pinMode(GPIO_NUM_33, OUTPUT);
@@ -185,11 +186,11 @@ void setup()
     {
       delay(500);
       Serial.print(F("."));
-      if (retries++ > 50)
-      {
-        Serial.println(F("Demasiados reintentos, reiniciar"));
-        esp_restart();
-      }
+      // if (retries++ > 50)
+      // {
+      //   Serial.println(F("Demasiados reintentos, reiniciar"));
+      //   esp_restart();
+      // }
     }
     Serial.println(F(""));
     Serial.println(F("WiFi connected"));
@@ -236,7 +237,7 @@ void evaluaComando(String line, bool i2c = false)
   {
     if (i2c)
       I2CSensors.println("ACK");
-    delay(1000);
+    delay(5000);
     ESP.restart();
   }
   else if (line.startsWith("L:1"))

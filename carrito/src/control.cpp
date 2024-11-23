@@ -86,10 +86,12 @@ void control(void *parametros)
             else if (bt == '.')
             {
                 Serial.println("Recibiendo datos WiFi");
-                String SSID = esp32BT.readStringUntil('\n').substring(SSID.indexOf(':'));
-                String PASS = esp32BT.readStringUntil('\n').substring(PASS.indexOf(':'));
-                Serial.println(SSID);
-                Serial.println(PASS);
+                String SSID = esp32BT.readStringUntil('\n');
+                SSID = SSID.substring(SSID.indexOf(':') + 1);
+                String PASS = esp32BT.readStringUntil('\n');
+                PASS = PASS.substring(PASS.indexOf(':') + 1);
+                Serial.println("Recibi SSID: " + SSID);
+                Serial.println("Recibi PASS: " + PASS);
                 Serial.println("Almacenando datos WiFi en preferencias");
                 prefs.begin("carrito");
                 prefs.putString("SSID", SSID);
@@ -152,7 +154,7 @@ bool ping()
 }
 bool enviarSSID(String SSID)
 {
-    Serial.print(F("SSID:"));
+    Serial.print(String("Enviando SSID:") + SSID + " -> ");
     Wire.beginTransmission(I2C_DEV_ADDR);
     Wire.println(String("SSID:") + SSID);
     uint8_t error = Wire.endTransmission(true);
@@ -168,7 +170,7 @@ bool enviarSSID(String SSID)
         if (response.startsWith("SSID:"))
         {
 
-            Serial.println(response);
+            Serial.println("Respuesta: " + response);
             while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
                 delay(1);
             return true;
@@ -178,7 +180,7 @@ bool enviarSSID(String SSID)
 }
 bool enviarPASS(String PASS)
 {
-    Serial.print(F("PASS:"));
+    Serial.print(String("Enviando PASS:") + PASS + " -> ");
     Wire.beginTransmission(I2C_DEV_ADDR);
     Wire.println(String("PASS:") + PASS);
     uint8_t error = Wire.endTransmission(true);
@@ -194,7 +196,7 @@ bool enviarPASS(String PASS)
         if (response.startsWith("PASS:"))
         {
 
-            Serial.println(response);
+            Serial.println("Respuesta: " + response);
             while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
                 delay(1);
             return true;
@@ -221,8 +223,8 @@ bool enviarRESTART()
         {
 
             Serial.println(response);
-            while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
-                delay(1);
+            // while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
+            //     delay(1);
             return true;
         }
     }
