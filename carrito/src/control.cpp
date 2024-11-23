@@ -85,6 +85,10 @@ void control(void *parametros)
                 prefs.putString("PASS", PASS);
                 prefs.end();
             }
+            else if (bt == ',')
+            {
+                Serial.println("enviar la IP de la camara");
+            }
             // xd();
         }
         taskYIELD();
