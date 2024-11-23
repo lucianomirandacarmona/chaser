@@ -1,10 +1,14 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <Wire.h>
+#include <I2CScanner.h>
 #include <luces.h>
 #include <control.h>
 #include <motores.h>
 #include <OTA.h>
+
+I2CScanner scanner;
+
 /***************************************************
   This is an example for our Adafruit 16-channel PWM & Servo driver
   Servo test - this will drive 8 servos, one after the other on the
@@ -38,6 +42,8 @@ void setup()
   Serial.println("8 channel Servo test!");
   Wire.begin();
 
+  scanner.Init();
+
   delay(100);
   // xTaskCreatePinnedToCore(luces, "luces", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(control, "control", 4096, NULL, 1, NULL, 1);
@@ -48,7 +54,9 @@ void setup()
 
 void loop()
 {
-  // i2c_scanner();/-
+  scanner.Scan();
+  delay(5000);
+  // i2c_scanner();
 }
 
 void i2c_scanner()
