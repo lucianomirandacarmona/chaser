@@ -13,6 +13,10 @@
 
 #define CAMBIA_LUCES 'ñ'
 #define LUCES_VERDE 'Ñ'
+
+
+#define I2C_DEV_ADDR 0x55
+
 void xd();
 void control(void *parametros);
 
