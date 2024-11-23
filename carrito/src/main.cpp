@@ -49,7 +49,7 @@ void setup()
 
 void loop()
 {
-  // i2c_scanner();
+  // i2c_scanner();/-
 }
 
 void i2c_scanner()
