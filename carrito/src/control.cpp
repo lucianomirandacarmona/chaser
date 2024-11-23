@@ -100,7 +100,127 @@ void control(void *parametros)
 void ping()
 {
     Serial.print(F("ping:"));
-Wire.begintransmision((I2C_DEV_ADDR));
-Wire.println(F("ping"));
-uint8_t error = Wire.endtransmision
+    Wire.beginTransmission((I2C_DEV_ADDR));
+    Wire.println(F("ping"));
+    uint8_t error = Wire.endTransmission(true);
+    if (error != 0)
+        Serial.printf("endTransmission: %u/n", error);
+    while (Wire.requestFrom(I2C_DEV_ADDR, 5) > 0)
+    {
+        String response = Wire.readStringUntil('\n');
+        if (response.startsWith("PONG"))
+        {
+
+            Serial.println(response);
+            while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
+                delay(1);
+            break;
+        }
+    }
+}
+void enviarSSID(String SSID)
+{
+  Serial.print(F("SSID:"));
+  Wire.beginTransmission(I2C_DEV_ADDR);
+  Wire.println(String("SSID:") + SSID);
+  uint8_t error = Wire.endTransmission(true);
+  if (error != 0)
+    Serial.printf("endTransmission: %u\n", error);
+  while (Wire.requestFrom(I2C_DEV_ADDR, 5) > 0)
+  {
+    String response = Wire.readStringUntil('\n');
+    if (response.startsWith("SSID:"))
+    {
+ 
+      Serial.println(response);
+      while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
+        delay(1);
+      break;
+    }
+  }
+}
+void enviarPASS(String PASS)
+{
+  Serial.print(F("PASS:"));
+  Wire.beginTransmission(I2C_DEV_ADDR);
+  Wire.println(String("PASS:") + PASS);
+  uint8_t error = Wire.endTransmission(true);
+  if (error != 0)
+    Serial.printf("endTransmission: %u\n", error);
+  while (Wire.requestFrom(I2C_DEV_ADDR, 5) > 0)
+  {
+    String response = Wire.readStringUntil('\n');
+    if (response.startsWith("PASS:"))
+    {
+ 
+      Serial.println(response);
+      while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
+        delay(1);
+      break;
+    }
+  }
+}
+void enviarRESTART()
+{
+  Serial.print(F("RESTART"));
+  Wire.beginTransmission(I2C_DEV_ADDR);
+  Wire.println(String("RESTART"));
+  uint8_t error = Wire.endTransmission(true);
+  if (error != 0)
+    Serial.printf("endTransmission: %u\n", error);
+  while (Wire.requestFrom(I2C_DEV_ADDR, 4) > 0)
+  {
+    String response = Wire.readStringUntil('\n');
+    if (response.startsWith("ACK"))
+    {
+ 
+      Serial.println(response);
+      while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
+        delay(1);
+      break;
+    }
+  }
+}
+String preguntarIP()
+{
+  Serial.print(F("IP:"));
+  Wire.beginTransmission(I2C_DEV_ADDR);
+  Wire.println(String("IP"));
+  uint8_t error = Wire.endTransmission(true);
+  if (error != 0)
+    Serial.printf("endTransmission: %u\n", error);
+  while (Wire.requestFrom(I2C_DEV_ADDR, 64) > 0)
+  {
+    String response = Wire.readStringUntil('\n');
+    if (response.startsWith("IP:") || response.startsWith("DISCONNECTED"))
+    {
+ 
+      Serial.println(response);
+      while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
+        delay(1);
+      return response;
+    }
+  }
+  return String();
+}
+void enviarFLASH(bool luz)
+{
+  Serial.print(F("L:"));
+  Wire.beginTransmission(I2C_DEV_ADDR);
+  Wire.println(luz ? String("L:1") : String("L:0"));
+  uint8_t error = Wire.endTransmission(true);
+  if (error != 0)
+    Serial.printf("endTransmission: %u\n", error);
+  while (Wire.requestFrom(I2C_DEV_ADDR, 4) > 0)
+  {
+    String response = Wire.readStringUntil('\n');
+    if (response.startsWith("ACK"))
+    {
+ 
+      Serial.println(response);
+      while (Wire.requestFrom(I2C_DEV_ADDR, 1) > 0 && Wire.read() != 0)
+        delay(1);
+      break;
+    }
+  }
 }
