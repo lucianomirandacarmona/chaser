@@ -1,6 +1,19 @@
 #include <BluetoothSerial.h>
 #include <Wire.h>
 
+#ifdef __has_include
+  #if __has_include("config_local.h")
+    #include "config_local.h"
+  #else
+    #warning "El archivo config_local.h no se ha encontrado. Usando el nombre predeterminado para el dispositivo Bluetooth."
+  #endif
+#else
+  #include "config_local1.h"  // En versiones de compiladores más antiguas que no soportan __has_include
+#endif
+#ifndef BT_DEVICE_NAME
+  #define BT_DEVICE_NAME "carrito-bt-sayab"
+  #warning "El archivo config_local.h no se ha encontrado. Usando el nombre predeterminado para el dispositivo Bluetooth."
+#endif
 #include <control.h>
 #include <motores.h>
 #include <luces.h>
@@ -25,7 +38,7 @@ void xd()
 void control(void *parametros)
 {
     Serial.println("Control iniciado");
-    esp32BT.begin("carrito-mario");
+    esp32BT.begin(BT_DEVICE_NAME);
 
     while (true)
     {

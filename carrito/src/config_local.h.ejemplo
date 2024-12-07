@@ -1,0 +1,3 @@
+// Copia este archivo con el nombre config_local.h y luego
+// pon el nombre que quieras que tenga tu carrito en donde dice carrito-bt-sayab
+#define BT_DEVICE_NAME "carrito-bt-sayab"
