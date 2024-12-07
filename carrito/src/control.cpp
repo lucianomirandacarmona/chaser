@@ -2,17 +2,17 @@
 #include <Wire.h>
 
 #ifdef __has_include
-  #if __has_include("config_local.h")
-    #include "config_local.h"
-  #else
-    #warning "El archivo config_local.h no se ha encontrado. Usando el nombre predeterminado para el dispositivo Bluetooth."
-  #endif
+#if __has_include("config_local.h")
+#include "config_local.h"
 #else
-  #include "config_local.h"  // En versiones de compiladores más antiguas que no soportan __has_include
+#warning "El archivo config_local.h no se ha encontrado. Usando el nombre predeterminado para el dispositivo Bluetooth."
+#endif
+#else
+#include "config_local.h" // En versiones de compiladores más antiguas que no soportan __has_include
 #endif
 #ifndef BT_DEVICE_NAME
-  #define BT_DEVICE_NAME "carrito-bt-sayab"
-  #warning "El archivo config_local.h no se ha encontrado. Usando el nombre predeterminado para el dispositivo Bluetooth."
+#define BT_DEVICE_NAME "carrito-bt-sayab"
+#warning "El archivo config_local.h no se ha encontrado. Usando el nombre predeterminado para el dispositivo Bluetooth."
 #endif
 #include <control.h>
 #include <motores.h>
@@ -94,7 +94,10 @@ void control(void *parametros)
             int bt = esp32BT.read();
             if (bt == 'x')
             {
-                Serial.printf("%d,%d\n", esp32BT.read(), esp32BT.read());
+                String coordenadas = esp32BT.readStringUntil('\n');
+                String X = coordenadas.substring(1, coordenadas.indexOf(','));
+                String Y = coordenadas.substring(coordenadas.indexOf(',') + 1);
+                Serial.printf("%s,%s\n", X.c_str(), Y.c_str());
             }
             else if (bt == '.')
             {
