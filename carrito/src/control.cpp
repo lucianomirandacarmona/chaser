@@ -8,7 +8,7 @@
     #warning "El archivo config_local.h no se ha encontrado. Usando el nombre predeterminado para el dispositivo Bluetooth."
   #endif
 #else
-  #include "config_local1.h"  // En versiones de compiladores más antiguas que no soportan __has_include
+  #include "config_local.h"  // En versiones de compiladores más antiguas que no soportan __has_include
 #endif
 #ifndef BT_DEVICE_NAME
   #define BT_DEVICE_NAME "carrito-bt-sayab"
