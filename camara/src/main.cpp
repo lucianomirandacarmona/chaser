@@ -12,6 +12,7 @@ TwoWire I2CSensors = TwoWire(0);
 uint32_t i = 0;
 String lastRequest = "";
 
+RTC_DATA_ATTR int wifiRetries;
 Preferences prefs;
 void handleSerial(void *params);
 void onRequest();
@@ -138,6 +139,8 @@ void setup()
   if (err != ESP_OK)
   {
     Serial.printf("Camera init failed with error 0x%x", err);
+    delay(10000);
+    esp_restart();
     return;
   }
 
@@ -164,21 +167,29 @@ void setup()
   s->set_vflip(s, 1);
 #endif
 
-// Setup LED FLash if LED pin is defined in camera_pins.h
+  // Setup LED FLash if LED pin is defined in camera_pins.h
 #if defined(LED_GPIO_NUM)
   setupLedFlash(LED_GPIO_NUM);
 #endif
 
   prefs.begin("camara");
+  wifiRetries = prefs.getInt("wifiRetries", 0);
+  delay(50);
   xTaskCreate(handleSerial, "handleSerial", 2048, NULL, 1, NULL);
   if (prefs.isKey("SSID") && prefs.isKey("PASS"))
   {
-    Serial.print(F("SSID: "));
-    Serial.println(prefs.getString("SSID"));
-    Serial.print(F("PASS: "));
-    Serial.println(prefs.getString("PASS"));
+    String SSID = prefs.getString("SSID");
+    String PASS = prefs.getString("PASS");
+    Serial.print(F("SSID: ["));
+    Serial.print(SSID);
+    Serial.println("]");
+    Serial.print(F("PASS: ["));
+    Serial.print(PASS);
+    Serial.println("]");
 
-    WiFi.begin(prefs.getString("SSID"), prefs.getString("PASS"));
+    if (SSID.equals("MiniMakers")) Serial.println("Es MiniMakers");
+    if (PASS.equals("Sayaab01")) Serial.println("Es MiniMakers password igual");
+    WiFi.begin(SSID, PASS);
     WiFi.setSleep(false);
 
     int retries = 0;
@@ -186,12 +197,23 @@ void setup()
     {
       delay(500);
       Serial.print(F("."));
-      // if (retries++ > 50)
-      // {
-      //   Serial.println(F("Demasiados reintentos, reiniciar"));
-      //   esp_restart();
-      // }
+      if (retries++ > 50)
+      {
+        Serial.println((String("Demasiados reintentos, reiniciar: ") + String(wifiRetries)));
+        wifiRetries++;
+        prefs.putInt("wifiRetries", wifiRetries);
+        if (wifiRetries > 3) {
+          prefs.putString("SSID", "MiniMakers");
+          prefs.putString("PASS", "Sayaab01");
+          prefs.end();
+          Serial.println(F("Fijando la default de MiniMakers con password Sayaab01"));
+        }
+        delay(1000);
+        esp_restart();
+      }
     }
+    wifiRetries = 0;
+    prefs.putInt("wifiRetries", wifiRetries);
     Serial.println(F(""));
     Serial.println(F("WiFi connected"));
 
@@ -319,6 +341,7 @@ void onReceive(int len)
   {
     String line = I2CSensors.readStringUntil('\n');
     line.replace("\n", "");
+    line.replace("\r", "");
     Serial.println(line);
     lastRequest = line;
   }

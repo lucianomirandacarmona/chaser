@@ -25,7 +25,7 @@ void xd()
 void control(void *parametros)
 {
     Serial.println("Control iniciado");
-    esp32BT.begin("chaser");
+    esp32BT.begin("carrito-mario");
 
     while (true)
     {
@@ -117,6 +117,7 @@ void control(void *parametros)
             {
                 Serial.println("Pidiendo la IP de la camara");
                 String ipCamara = preguntarIP();
+                ipCamara = ipCamara.substring(ipCamara.indexOf(':') + 1);
                 Serial.println("IP de la camara: " + ipCamara);
                 esp32BT.println(ipCamara);
             }
