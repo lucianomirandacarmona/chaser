@@ -92,12 +92,27 @@ void control(void *parametros)
                  setLucesEffect(SOLID_GREEN);
              }*/
             int bt = esp32BT.read();
-            if (bt == 'x')
+            if (bt == 'w')
+            {
+            }
+            else if (bt == 's')
+            {
+            }
+            else if (bt == 'a')
+            {
+            }
+            else if (bt == 'd')
+            {
+            }
+            else if (bt == 'X')
+            {
+            }
+            else if (bt == 'x')
             {
                 String coordenadas = esp32BT.readStringUntil('\n');
-                String X = coordenadas.substring(1, coordenadas.indexOf(','));
+                String X = coordenadas.substring(0, coordenadas.indexOf(','));
                 String Y = coordenadas.substring(coordenadas.indexOf(',') + 1);
-                Serial.printf("%s,%s\n", X.c_str(), Y.c_str());
+                Serial.printf("%s ; %s,%s\n", coordenadas.c_str(), X.c_str(), Y.c_str());
             }
             else if (bt == '.')
             {
