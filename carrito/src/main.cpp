@@ -45,9 +45,9 @@ void setup()
   scanner.Init();
 
   delay(100);
-  // xTaskCreatePinnedToCore(luces, "luces", 4096, NULL, 1, NULL, 1);
+   xTaskCreatePinnedToCore(luces, "luces", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(control, "control", 4096, NULL, 1, NULL, 1);
-  // xTaskCreatePinnedToCore(motores, "motores", 4096, NULL, 1, NULL, 1);
+ xTaskCreatePinnedToCore(motores, "motores", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(OTATask, "OTAtask", 4096, NULL, 1, NULL, 1);
   xTaskCreate(handleSerial, "handleSerial", 2048, NULL, 1, NULL);
 }

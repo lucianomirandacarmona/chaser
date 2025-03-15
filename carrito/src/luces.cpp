@@ -12,7 +12,7 @@
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN_LEDS, NEO_GRB + NEO_KHZ800);
 Adafruit_SSD1306 display = Adafruit_SSD1306(128, 32, &Wire);
 float brillo = 1.0;
-int effect = SOLID_GREEN;
+int effect = RAINBOW;
 
 uint32_t Wheel(byte WheelPos)
 {

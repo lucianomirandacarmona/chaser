@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #ifndef _LUCES_
 #define _LUCES_
-#define NUM_LEDS 52
+#define NUM_LEDS 22
 #define SOLID_GREEN 0
 #define RAINBOW 1
 

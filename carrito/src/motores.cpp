@@ -3,9 +3,10 @@
 
 #include <Adafruit_PWMServoDriver.h>
 
-/*#include <Servo.h>
+#include <Servo.h>
+#include <motores.h>
 // MACROS are defined here
-Servo miservo = Servo();*/
+Servo miservo = Servo();
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 // you can also call it with a different address you want
@@ -77,7 +78,7 @@ void controlbrazo(float m1, float m2, float m3, float m4)
 }
 void motores(void *parametros)
 {
-    Wire.begin(14, 15);
+    Wire.begin();
     pwm.begin();
 
     /*
@@ -125,6 +126,11 @@ void motores(void *parametros)
       pwm.writeMicroseconds(6, map(alpha, 90, -90, 500, 2350));
       pwm.writeMicroseconds(7, map(phy, 90, -90, 620, 2480));*/
     controlbrazo(90, 180, 180, 0);
+
+    miservo.write(FRONTAL_DERECHO, map(35, -100, 100, 0, 180));
+    miservo.write(FRONTAL_IZQUIERDO, map(35, -100, 100, 180, 0));
+    miservo.write(TRASERO_DERECHO , map(35, -100, 100, 0, 180));
+    miservo.write(TRASERO_IZQUIERDO, map(35, -100, 100, 180, 0));
     while (true)
     {
         if (Serial.available() > 0)
@@ -153,10 +159,10 @@ vTaskDelay(1000 / portTICK_PERIOD_MS);*/
         pwm.writeMicroseconds(3, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
         // pwm.writeMicroseconds(4, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
 
-        /*miservo.write(27, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 0, 180));
-        miservo.write(4, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 180, 0));
-        miservo.write(14, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 0, 180));
-        miservo.write(25, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 180, 0));*/
+        miservo.write(FRONTAL_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 0, 180));
+        miservo.write(FRONTAL_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 180, 0));
+        miservo.write(TRASERO_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 0, 180));
+        miservo.write(TRASERO_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 180, 0));
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
