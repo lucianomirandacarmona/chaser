@@ -94,18 +94,28 @@ void control(void *parametros)
             int bt = esp32BT.read();
             if (bt == 'w')
             {
+                setvelocidad(45);
+                setdireccion(1);
             }
             else if (bt == 's')
             {
+                setvelocidad(45);
+                setdireccion(-1);
             }
             else if (bt == 'a')
             {
+                setvelocidadRotacion(35);
+                 setRotacion(-1);
             }
             else if (bt == 'd')
             {
+                setvelocidadRotacion(35);
+                setRotacion(1);
             }
             else if (bt == 'X')
             {
+                setdireccion(0);
+                setRotacion(0);
             }
             else if (bt == 'x')
             {
@@ -113,6 +123,12 @@ void control(void *parametros)
                 String X = coordenadas.substring(0, coordenadas.indexOf(','));
                 String Y = coordenadas.substring(coordenadas.indexOf(',') + 1);
                 Serial.printf("%s ; %s,%s\n", coordenadas.c_str(), X.c_str(), Y.c_str());
+                float Xval = X.toFloat();
+                float Yval = Y.toFloat();
+                setdireccion(Yval>0?-1:(Yval<0?1:0));
+                setvelocidad(abs(Yval));
+                setRotacion(Xval>0?1:(Xval<0?-1:0));
+                setvelocidadRotacion(abs(Xval));
             }
             else if (bt == '.')
             {

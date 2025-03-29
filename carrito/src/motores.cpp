@@ -127,10 +127,10 @@ void motores(void *parametros)
       pwm.writeMicroseconds(7, map(phy, 90, -90, 620, 2480));*/
     controlbrazo(90, 180, 180, 0);
 
-    miservo.write(FRONTAL_DERECHO, map(35, -100, 100, 0, 180));
-    miservo.write(FRONTAL_IZQUIERDO, map(35, -100, 100, 180, 0));
-    miservo.write(TRASERO_DERECHO , map(35, -100, 100, 0, 180));
-    miservo.write(TRASERO_IZQUIERDO, map(35, -100, 100, 180, 0));
+    //miservo.write(FRONTAL_DERECHO, map(35, -100, 100, 0, 180));
+    //miservo.write(FRONTAL_IZQUIERDO, map(35, -100, 100, 180, 0));
+    //miservo.write(TRASERO_DERECHO , map(35, -100, 100, 0, 180));
+    //miservo.write(TRASERO_IZQUIERDO, map(35, -100, 100, 180, 0));
     while (true)
     {
         if (Serial.available() > 0)
@@ -159,10 +159,10 @@ vTaskDelay(1000 / portTICK_PERIOD_MS);*/
         pwm.writeMicroseconds(3, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
         // pwm.writeMicroseconds(4, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
 
-        miservo.write(FRONTAL_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 0, 180));
-        miservo.write(FRONTAL_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 180, 0));
-        miservo.write(TRASERO_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 0, 180));
-        miservo.write(TRASERO_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 180, 0));
+        miservo.write(FRONTAL_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
+        miservo.write(FRONTAL_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
+        miservo.write(TRASERO_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
+        miservo.write(TRASERO_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }

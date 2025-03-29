@@ -40,7 +40,7 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println("8 channel Servo test!");
-  Wire.begin();
+  Wire.begin(21,22);
 
   scanner.Init();
 
@@ -56,7 +56,7 @@ void loop()
 {
   scanner.Scan();
   delay(5000);
-  // i2c_scanner();
+  //i2c_scanner();
 }
 
 void i2c_scanner()
