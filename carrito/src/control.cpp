@@ -105,7 +105,7 @@ void control(void *parametros)
             else if (bt == 'a')
             {
                 setvelocidadRotacion(35);
-                 setRotacion(-1);
+                setRotacion(-1);
             }
             else if (bt == 'd')
             {
@@ -125,9 +125,9 @@ void control(void *parametros)
                 Serial.printf("%s ; %s,%s\n", coordenadas.c_str(), X.c_str(), Y.c_str());
                 float Xval = X.toFloat();
                 float Yval = Y.toFloat();
-                setdireccion(Yval>0?-1:(Yval<0?1:0));
+                setdireccion(Yval > 0 ? -1 : (Yval < 0 ? 1 : 0));
                 setvelocidad(abs(Yval));
-                setRotacion(Xval>0?1:(Xval<0?-1:0));
+                setRotacion(Xval > 0 ? 1 : (Xval < 0 ? -1 : 0));
                 setvelocidadRotacion(abs(Xval));
             }
             else if (bt == '.')
@@ -167,6 +167,15 @@ void control(void *parametros)
                 ipCamara = ipCamara.substring(ipCamara.indexOf(':') + 1);
                 Serial.println("IP de la camara: " + ipCamara);
                 esp32BT.println(ipCamara);
+            }
+            else if (bt == 'k')
+            {
+                Serial.println("Comando de control de brazo");
+                int motor = esp32BT.read() - '0';
+                Serial.printf("Motor %d\n", motor);
+                String valor = esp32BT.readStringUntil('\n');
+                Serial.println(valor);
+                setPosicionMotorBrazo(motor, valor.toInt());
             }
             // xd();
         }

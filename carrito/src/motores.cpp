@@ -28,6 +28,7 @@ int rotacion = 0;
 int direccion = 0;
 int velocidad = 0;
 int velocidadRotacion = 0;
+RTC_DATA_ATTR int motoresBrazo[] = {90, 180, 180, 0, 0, 0};
 void setRotacion(int r)
 {
     rotacion = r;
@@ -44,10 +45,23 @@ void setvelocidadRotacion(int r)
 {
     velocidadRotacion = r;
 }
-void controlbrazo(float m1, float m2, float m3, float m4)
+void setPosicionMotorBrazo(int motor, int posicion)
+{
+    motoresBrazo[motor] = map(posicion, -100, 100, 0, 180);
+}
+void controlBrazo()
 {
     static float _m1 = -1, _m2 = -1, _m3 = -1, _m4 = -1;
     float _v1, _v2, _v3, _v4;
+    // float m1 = map(motoresBrazo[0], -100, 100, 0, 180);
+    // float m2 = map(motoresBrazo[1], -100, 100, 0, 180);
+    // float m3 = map(motoresBrazo[2], -100, 100, 0, 180);
+    // float m4 = map(motoresBrazo[3], -100, 100, 0, 180);
+    float m1 = motoresBrazo[0];
+    float m2 = motoresBrazo[1];
+    float m3 = motoresBrazo[2];
+    float m4 = motoresBrazo[3];
+    float m5 = motoresBrazo[4];
     if (_m1 == -1)
         _m1 = m1;
     if (_m2 == -1)
@@ -64,11 +78,11 @@ void controlbrazo(float m1, float m2, float m3, float m4)
         _v2 = _m2 * cOrigen + m2 * cDestino;
         _v3 = _m3 * cOrigen + m3 * cDestino;
         _v4 = _m4 * cOrigen + m4 * cDestino;
-        //Serial.printf("_m1=%f, m1=%f, _v1=%f, i=%f, cos=%f\n", _m1, m1, _v1, i / 100.0, cOrigen);
-        pwm.writeMicroseconds(4, map(_v1, 0, 360, 400, 1920));
-        pwm.writeMicroseconds(5, map(_v2, 0, 180, 400, 2200));
-        pwm.writeMicroseconds(6, map(_v3, 180, 0, 500, 2350));
-        pwm.writeMicroseconds(7, map(_v4, 180, 0, 620, 2480));
+        // Serial.printf("_m1=%f, m1=%f, _v1=%f, i=%f, cos=%f\n", _m1, m1, _v1, i / 100.0, cOrigen);
+        pwm.writeMicroseconds(0, map(_v1, 0, 360, 400, 1920));
+        pwm.writeMicroseconds(1, map(_v2, 0, 180, 400, 2200));
+        pwm.writeMicroseconds(2, map(_v3, 180, 0, 500, 2350));
+        pwm.writeMicroseconds(3, map(_v4, 180, 0, 620, 2480));
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
     _m1 = m1;
@@ -99,10 +113,10 @@ void motores(void *parametros)
      */
     pwm.setOscillatorFrequency(27000000);
     pwm.setPWMFreq(SERVO_FREQ); // Analog servos run at ~50 Hz updates
-    pwm.writeMicroseconds(0, 1500);
-    pwm.writeMicroseconds(1, 1500);
-    pwm.writeMicroseconds(2, 1500);
-    pwm.writeMicroseconds(3, 1500);
+    // pwm.writeMicroseconds(0, 1500);
+    // pwm.writeMicroseconds(1, 1500);
+    // pwm.writeMicroseconds(2, 1500);
+    // pwm.writeMicroseconds(3, 1500);
     // pwm.writeMicroseconds(4, map(270, 0, 360, 400, 1920));
     // pwm.writeMicroseconds(5, map(90, 0, 180, 400, 2200));
     // pwm.writeMicroseconds(6, map(90, 180, 0, 500, 2350));
@@ -125,19 +139,19 @@ void motores(void *parametros)
       pwm.writeMicroseconds(5, map(theta, 90, -90, 400, 2200));
       pwm.writeMicroseconds(6, map(alpha, 90, -90, 500, 2350));
       pwm.writeMicroseconds(7, map(phy, 90, -90, 620, 2480));*/
-    controlbrazo(90, 180, 180, 0);
+    // controlbrazo(90, 180, 180, 0);
 
-    //miservo.write(FRONTAL_DERECHO, map(35, -100, 100, 0, 180));
-    //miservo.write(FRONTAL_IZQUIERDO, map(35, -100, 100, 180, 0));
-    //miservo.write(TRASERO_DERECHO , map(35, -100, 100, 0, 180));
-    //miservo.write(TRASERO_IZQUIERDO, map(35, -100, 100, 180, 0));
+    // miservo.write(FRONTAL_DERECHO, map(35, -100, 100, 0, 180));
+    // miservo.write(FRONTAL_IZQUIERDO, map(35, -100, 100, 180, 0));
+    // miservo.write(TRASERO_DERECHO , map(35, -100, 100, 0, 180));
+    // miservo.write(TRASERO_IZQUIERDO, map(35, -100, 100, 180, 0));
     while (true)
     {
         if (Serial.available() > 0)
         {
-            String v = Serial.readString();
-            Serial.println("Vale " + v);
-            controlbrazo(v.toFloat(), v.toFloat(), v.toFloat(), v.toFloat());
+            // String v = Serial.readString();
+            // Serial.println("Vale " + v);
+            // controlbrazo(v.toFloat(), v.toFloat(), v.toFloat(), v.toFloat());
 
             // pwm.writeMicroseconds(4, map(v.toInt(),0,360,400,1920)); // Base giratoria
             // pwm.writeMicroseconds(5, map(v.toInt(),0,180,400,2200));
@@ -153,16 +167,19 @@ vTaskDelay(1000 / portTICK_PERIOD_MS);
 vTaskDelay(1000 / portTICK_PERIOD_MS);
         pwm.writeMicroseconds(3, 1500);
 vTaskDelay(1000 / portTICK_PERIOD_MS);*/
-        pwm.writeMicroseconds(0, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 950, 1950));
-        pwm.writeMicroseconds(2, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
-        pwm.writeMicroseconds(1, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 950, 1950));
-        pwm.writeMicroseconds(3, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
-        // pwm.writeMicroseconds(4, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
+
+        // pwm.writeMicroseconds(0, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 950, 1950));
+        // pwm.writeMicroseconds(2, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
+        // pwm.writeMicroseconds(1, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 950, 1950));
+        // pwm.writeMicroseconds(3, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
+        //        // pwm.writeMicroseconds(4, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
 
         miservo.write(FRONTAL_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
         miservo.write(FRONTAL_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
         miservo.write(TRASERO_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
         miservo.write(TRASERO_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
+
+        controlBrazo();
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }

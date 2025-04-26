@@ -9,6 +9,7 @@ void setRotacion(int r);
 void setvelocidad(int r);
 void setdireccion(int r);
 void setvelocidadRotacion(int r);
+void setPosicionMotorBrazo(int motor, int posicion);
 
 void motores(void *parametros);
 
