@@ -28,7 +28,7 @@ int rotacion = 0;
 int direccion = 0;
 int velocidad = 0;
 int velocidadRotacion = 0;
-RTC_DATA_ATTR int motoresBrazo[] = {90, 180, 180, 0, 0, 0};
+RTC_DATA_ATTR int motoresBrazo[] = {180, 180, 180, 0, 0, 0}; // 90
 void setRotacion(int r)
 {
     rotacion = r;
@@ -47,7 +47,10 @@ void setvelocidadRotacion(int r)
 }
 void setPosicionMotorBrazo(int motor, int posicion)
 {
-    motoresBrazo[motor] = map(posicion, -100, 100, 0, 180);
+    if (motor == 0)
+        motoresBrazo[motor] = map(posicion, -100, 100, 0, 360);
+    else
+        motoresBrazo[motor] = map(posicion, -100, 100, 0, 180);
 }
 void controlBrazo()
 {
