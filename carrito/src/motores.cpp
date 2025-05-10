@@ -175,6 +175,11 @@ void motores(void *parametros)
         {
             String v = Serial.readStringUntil('\n');
             Serial.println("Vale " + v);
+            String m = v.substring(0, v.indexOf('.'));
+            String p = v.substring(v.indexOf('.') + 1);
+            Serial.printf("Motor %d Posicion %d\n", m.toInt(), p.toInt());
+            setPosicionMotorBrazo(m.toInt(), p.toInt());
+
             // controlbrazo(v.toFloat(), v.toFloat(), v.toFloat(), v.toFloat());
 
             // pwm.writeMicroseconds(4, map(v.toInt(),0,360,400,1920)); // Base giratoria

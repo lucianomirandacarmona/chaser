@@ -40,23 +40,23 @@ void setup()
 {
   Serial.begin(115200);
   Serial.println("8 channel Servo test!");
-  Wire.begin(21,22);
+  Wire.begin(21, 22);
 
   scanner.Init();
 
   delay(100);
-   xTaskCreatePinnedToCore(luces, "luces", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(luces, "luces", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(control, "control", 4096, NULL, 1, NULL, 1);
- xTaskCreatePinnedToCore(motores, "motores", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(motores, "motores", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(OTATask, "OTAtask", 4096, NULL, 1, NULL, 1);
   xTaskCreate(handleSerial, "handleSerial", 2048, NULL, 1, NULL);
 }
 
 void loop()
 {
-  scanner.Scan();
+  // scanner.Scan();
   delay(5000);
-  //i2c_scanner();
+  // i2c_scanner();
 }
 
 void i2c_scanner()
