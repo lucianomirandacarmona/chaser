@@ -28,29 +28,50 @@ int rotacion = 0;
 int direccion = 0;
 int velocidad = 0;
 int velocidadRotacion = 0;
+bool cambioRuedas = false, cambioBrazo = false;
 RTC_DATA_ATTR int motoresBrazo[] = {180, 180, 180, 0, 0, 0}; // 90
 void setRotacion(int r)
 {
-    rotacion = r;
+    if (r != rotacion)
+    {
+        rotacion = r;
+        cambioRuedas = true;
+    }
 }
 void setvelocidad(int r)
 {
-    velocidad = r;
+    if (r != rotacion)
+    {
+        velocidad = r;
+        cambioRuedas = true;
+    }
 }
 void setdireccion(int r)
 {
-    direccion = r;
+    if (r != rotacion)
+    {
+        direccion = r;
+        cambioRuedas = true;
+    }
 }
 void setvelocidadRotacion(int r)
 {
-    velocidadRotacion = r;
+    if (r != rotacion)
+    {
+        velocidadRotacion = r;
+        cambioRuedas = true;
+    }
 }
 void setPosicionMotorBrazo(int motor, int posicion)
 {
-    if (motor == 0)
-        motoresBrazo[motor] = map(posicion, -100, 100, 0, 360);
-    else
-        motoresBrazo[motor] = map(posicion, -100, 100, 0, 180);
+    if (posicion != motoresBrazo[motor])
+    {
+        if (motor == 0)
+            motoresBrazo[motor] = map(posicion, -100, 100, 0, 360);
+        else
+            motoresBrazo[motor] = map(posicion, -100, 100, 0, 180);
+        cambioBrazo = true;
+    }
 }
 void controlBrazo()
 {
@@ -152,8 +173,8 @@ void motores(void *parametros)
     {
         if (Serial.available() > 0)
         {
-            // String v = Serial.readString();
-            // Serial.println("Vale " + v);
+            String v = Serial.readStringUntil('\n');
+            Serial.println("Vale " + v);
             // controlbrazo(v.toFloat(), v.toFloat(), v.toFloat(), v.toFloat());
 
             // pwm.writeMicroseconds(4, map(v.toInt(),0,360,400,1920)); // Base giratoria
@@ -162,28 +183,20 @@ void motores(void *parametros)
             // pwm.writeMicroseconds(7, map(v.toInt(), 180, 0, 620, 2480));
             // controlbrazo(float m1, float m2, float m3, float m4)
         }
-        /*pwm.writeMicroseconds(3, 950);
-vTaskDelay(1000 / portTICK_PERIOD_MS);
-        pwm.writeMicroseconds(3, 1500);
-vTaskDelay(1000 / portTICK_PERIOD_MS);
-        pwm.writeMicroseconds(3, 1950);
-vTaskDelay(1000 / portTICK_PERIOD_MS);
-        pwm.writeMicroseconds(3, 1500);
-vTaskDelay(1000 / portTICK_PERIOD_MS);*/
-
-        // pwm.writeMicroseconds(0, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 950, 1950));
-        // pwm.writeMicroseconds(2, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
-        // pwm.writeMicroseconds(1, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 950, 1950));
-        // pwm.writeMicroseconds(3, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
-        //        // pwm.writeMicroseconds(4, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 1950, 950));
-
-        miservo.write(FRONTAL_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
-        miservo.write(FRONTAL_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
-        miservo.write(TRASERO_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
-        miservo.write(TRASERO_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
-
-        controlBrazo();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        if (cambioRuedas)
+        {
+            cambioRuedas = false;
+            miservo.write(FRONTAL_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
+            miservo.write(FRONTAL_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
+            miservo.write(TRASERO_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
+            miservo.write(TRASERO_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
+        }
+        if (cambioBrazo)
+        {
+            cambioBrazo = false;
+            controlBrazo();
+        }
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
 
