@@ -124,6 +124,11 @@ void controlBrazo(void *params)
             {
                 float cOrigen = (cos((100 - i) / 100.0 * PI - PI) + 1) / 2.0;
                 float cDestino = (cos(i / 100.0 * PI - PI) + 1) / 2.0;
+                m1 = motoresBrazo[0];
+                m2 = motoresBrazo[1];
+                m3 = motoresBrazo[2];
+                m4 = motoresBrazo[3];
+                m5 = motoresBrazo[4];
                 _v1 = _m1 * cOrigen + m1 * cDestino;
                 _v2 = _m2 * cOrigen + m2 * cDestino;
                 _v3 = _m3 * cOrigen + m3 * cDestino;
