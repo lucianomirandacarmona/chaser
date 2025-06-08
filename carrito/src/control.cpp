@@ -177,6 +177,20 @@ void control(void *parametros)
                 Serial.println(valor);
                 setPosicionMotorBrazo(motor, valor.toInt());
             }
+            else if (bt == 'K')
+            {
+                Serial.println("Comando de control de brazo");
+                for (;;)
+                {
+                    int motor = esp32BT.read();
+                    if (motor == '\n')
+                        break;
+                    Serial.printf("Motor %d\n", motor);
+                    String valor = esp32BT.readStringUntil(';');
+                    Serial.println(valor);
+                    setPosicionMotorBrazo(motor, valor.toInt());
+                }
+            }
             // xd();
         }
         taskYIELD();

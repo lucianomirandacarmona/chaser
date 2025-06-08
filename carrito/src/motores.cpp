@@ -78,6 +78,7 @@ void controlBrazo(void *params)
     static float _m1 = -1, _m2 = -1, _m3 = -1, _m4 = -1;
     float _v1, _v2, _v3, _v4;
     bool changed;
+    Serial.println("Iniciando hilo de brazo");
     while (true)
     {
         // float m1 = map(motoresBrazo[0], -100, 100, 0, 180);
@@ -110,11 +111,15 @@ void controlBrazo(void *params)
             _m4 = m4;
             changed = true;
         }
-        if (m1 != _m1 || m2 != _m2 || m3 != _m3 || m4 != _m4)
+        if (m1 != _m1 || m2 != _m2 || m3 != _m3 || m4 != _m4 || cambioBrazo == true)
+        {
             changed = true;
+            cambioBrazo = false;
+        }
 
         if (changed)
         {
+            Serial.println("Enviando nueva posicion del brazo");
             for (int i = 0; i <= 100; i++)
             {
                 float cOrigen = (cos((100 - i) / 100.0 * PI - PI) + 1) / 2.0;
@@ -135,8 +140,7 @@ void controlBrazo(void *params)
             _m3 = m3;
             _m4 = m4;
         }
-        else
-            vTaskDelay(1 / portTICK_PERIOD_MS);
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
 void motores(void *parametros)
@@ -194,7 +198,7 @@ void motores(void *parametros)
     // miservo.write(FRONTAL_IZQUIERDO, map(35, -100, 100, 180, 0));
     // miservo.write(TRASERO_DERECHO , map(35, -100, 100, 0, 180));
     // miservo.write(TRASERO_IZQUIERDO, map(35, -100, 100, 180, 0));
-    xTaskCreate(controlBrazo, "controlBrazo", 4096, NULL,0, NULL);
+    xTaskCreatePinnedToCore(controlBrazo, "controlBrazo", 4096, NULL, 1, NULL, 1);
     while (true)
     {
         if (Serial.available() > 0)
@@ -205,14 +209,6 @@ void motores(void *parametros)
             String p = v.substring(v.indexOf('.') + 1);
             Serial.printf("Motor %d Posicion %d\n", m.toInt(), p.toInt());
             setPosicionMotorBrazo(m.toInt(), p.toInt());
-
-            // controlbrazo(v.toFloat(), v.toFloat(), v.toFloat(), v.toFloat());
-
-            // pwm.writeMicroseconds(4, map(v.toInt(),0,360,400,1920)); // Base giratoria
-            // pwm.writeMicroseconds(5, map(v.toInt(),0,180,400,2200));
-            // pwm.writeMicroseconds(6, map(v.toInt(), 180, 0, 500, 2350));
-            // pwm.writeMicroseconds(7, map(v.toInt(), 180, 0, 620, 2480));
-            // controlbrazo(float m1, float m2, float m3, float m4)
         }
         if (cambioRuedas)
         {
@@ -222,11 +218,6 @@ void motores(void *parametros)
             miservo.write(TRASERO_DERECHO, map(velocidad * direccion + rotacion * velocidadRotacion, -100, 100, 180, 0));
             miservo.write(TRASERO_IZQUIERDO, map(velocidad * direccion - rotacion * velocidadRotacion, -100, 100, 0, 180));
         }
-        // if (cambioBrazo)
-        // {
-        //     cambioBrazo = false;
-        //     controlBrazo();
-        // }
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
