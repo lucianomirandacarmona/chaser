@@ -185,6 +185,7 @@ void control(void *parametros)
                     int motor = esp32BT.read();
                     if (motor == '\n')
                         break;
+                    motor -= '0';
                     Serial.printf("Motor %d\n", motor);
                     String valor = esp32BT.readStringUntil(';');
                     Serial.println(valor);
