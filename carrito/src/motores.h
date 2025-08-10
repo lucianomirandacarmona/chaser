@@ -10,7 +10,8 @@ void setvelocidad(int r);
 void setdireccion(int r);
 void setvelocidadRotacion(int r);
 void setPosicionMotorBrazo(int motor, int posicion);
-
+void apagarServos();
+void estacionarServos();
 void motores(void *parametros);
 
 #endif

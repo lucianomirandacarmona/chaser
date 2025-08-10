@@ -23,13 +23,14 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define USMIN 600     // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
 #define USMAX 2400    // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
+#define POSICIONES_INICIALES {90, 45, 180, 180, 90, 0}
 
 int rotacion = 0;
 int direccion = 0;
 int velocidad = 0;
 int velocidadRotacion = 0;
 bool cambioRuedas = false, cambioBrazo = false;
-RTC_DATA_ATTR int motoresBrazo[] = {90, 45, 180, 180, 0, 0}; // 90
+RTC_DATA_ATTR int motoresBrazo[] = POSICIONES_INICIALES;
 void setRotacion(int r)
 {
     if (r != rotacion)
@@ -75,8 +76,8 @@ void setPosicionMotorBrazo(int motor, int posicion)
 }
 void controlBrazo(void *params)
 {
-    static float _m1 = -1, _m2 = -1, _m3 = -1, _m4 = -1;
-    float _v1, _v2, _v3, _v4;
+    static float _m1 = -1, _m2 = -1, _m3 = -1, _m4 = -1, _m5 = -1, _m6 = -1;
+    float _v1, _v2, _v3, _v4, _v5, _v6;
     bool changed;
     Serial.println("Iniciando hilo de brazo");
     while (true)
@@ -90,6 +91,7 @@ void controlBrazo(void *params)
         float m3 = motoresBrazo[2];
         float m4 = motoresBrazo[3];
         float m5 = motoresBrazo[4];
+        float m6 = motoresBrazo[5];
         changed = false;
         if (_m1 == -1)
         {
@@ -111,7 +113,17 @@ void controlBrazo(void *params)
             _m4 = m4;
             changed = true;
         }
-        if (m1 != _m1 || m2 != _m2 || m3 != _m3 || m4 != _m4 || cambioBrazo == true)
+        if (_m5 == -1)
+        {
+            _m5 = m5;
+            changed = true;
+        }
+        if (_m6 == -1)
+        {
+            _m6 = m6;
+            changed = true;
+        }
+        if (m1 != _m1 || m2 != _m2 || m3 != _m3 || m4 != _m4 || m5 != _m5 || m6 != _m6 || cambioBrazo == true)
         {
             changed = true;
             cambioBrazo = false;
@@ -119,6 +131,7 @@ void controlBrazo(void *params)
 
         if (changed)
         {
+            pwm.wakeup();
             Serial.println("Enviando nueva posicion del brazo");
             for (int i = 0; i <= 100; i++)
             {
@@ -129,25 +142,44 @@ void controlBrazo(void *params)
                 m3 = motoresBrazo[2];
                 m4 = motoresBrazo[3];
                 m5 = motoresBrazo[4];
+                m6 = motoresBrazo[5];
                 _v1 = _m1 * cOrigen + m1 * cDestino;
                 _v2 = _m2 * cOrigen + m2 * cDestino;
                 _v3 = _m3 * cOrigen + m3 * cDestino;
                 _v4 = _m4 * cOrigen + m4 * cDestino;
+                _v5 = _m5 * cOrigen + m5 * cDestino;
+                _v6 = _m6 * cOrigen + m6 * cDestino;
                 // Serial.printf("_m1=%f, m1=%f, _v1=%f, i=%f, cos=%f\n", _m1, m1, _v1, i / 100.0, cOrigen);
                 pwm.writeMicroseconds(0, map(_v1, 0, 360, 400, 1920));
                 pwm.writeMicroseconds(1, map(_v2, 0, 180, 400, 2200));
                 pwm.writeMicroseconds(2, map(_v3, 180, 0, 500, 2350));
                 pwm.writeMicroseconds(3, map(_v4, 180, 0, 620, 2480));
+                pwm.writeMicroseconds(4, map(_v5, 180, 0, 620, 2480));
+                pwm.writeMicroseconds(5, map(_v6, 180, 0, 620, 2480));
                 vTaskDelay(10 / portTICK_PERIOD_MS);
             }
             _m1 = m1;
             _m2 = m2;
             _m3 = m3;
             _m4 = m4;
+            _m5 = m5;
+            _m6 = m6;
         }
         vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
+void apagarServos()
+{
+    pwm.sleep();
+}
+
+void estacionarServos()
+{
+    int temp[] = POSICIONES_INICIALES;
+    memcpy(motoresBrazo, temp, sizeof(temp));
+    cambioBrazo = true;
+}
+
 void motores(void *parametros)
 {
     Wire.begin();
@@ -204,6 +236,9 @@ void motores(void *parametros)
     // miservo.write(TRASERO_DERECHO , map(35, -100, 100, 0, 180));
     // miservo.write(TRASERO_IZQUIERDO, map(35, -100, 100, 180, 0));
     xTaskCreatePinnedToCore(controlBrazo, "controlBrazo", 4096, NULL, 1, NULL, 1);
+    estacionarServos();
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    apagarServos();
     while (true)
     {
         if (Serial.available() > 0)

@@ -192,6 +192,16 @@ void control(void *parametros)
                     setPosicionMotorBrazo(motor, valor.toInt());
                 }
             }
+            else if (bt == 'O')
+            {
+                Serial.println("Apagar servos");
+                apagarServos();
+            }
+            else if (bt == 'P')
+            {
+                Serial.println("Estacionar servos");
+                estacionarServos();
+            }
             // xd();
         }
         taskYIELD();
