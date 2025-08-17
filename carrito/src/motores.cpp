@@ -23,7 +23,8 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 #define USMIN 600     // This is the rounded 'minimum' microsecond length based on the minimum pulse of 150
 #define USMAX 2400    // This is the rounded 'maximum' microsecond length based on the maximum pulse of 600
 #define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
-#define POSICIONES_INICIALES {90, 45, 180, 180, 90, 0}
+// #define POSICIONES_INICIALES {90, 45, 180, 180, 90, 0}
+#define POSICIONES_INICIALES {90, 45, 90, 90, 90, 0}
 
 int rotacion = 0;
 int direccion = 0;

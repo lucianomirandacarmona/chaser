@@ -23,7 +23,7 @@ void OTATask(void *params)
 
   while (wifiMulti.run() != WL_CONNECTED)
   {
-    Serial.println("Connection Failed! Rebooting...");
+    // Serial.println("Connection Failed! Rebooting...");
     delay(5000);
     // ESP.restart();
   }

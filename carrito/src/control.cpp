@@ -172,6 +172,7 @@ void control(void *parametros)
             {
                 Serial.println("Comando de control de brazo");
                 int motor = esp32BT.read() - '0';
+                if(motor<0) continue;
                 Serial.printf("Motor %d\n", motor);
                 String valor = esp32BT.readStringUntil('\n');
                 Serial.println(valor);
